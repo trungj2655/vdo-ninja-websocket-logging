@@ -9,7 +9,7 @@ use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::fmt::time::FormatTime;
 use tracing_subscriber::EnvFilter;
 use chrono::Local;
-clap_duration::assign_duration_range_validator!(TIMEOUT_RANGE = {default: 3s, min: 1s, max: 75s});
+clap_duration::assign_duration_range_validator!(TIMEOUT_RANGE = {default: 1s, min: 1s, max: 100s});
 #[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -61,7 +61,7 @@ async fn main() {
     let _main_span = info_span!("main").entered();
     let handshake = serde_json::json!({"join": &args.api_id}).to_string();
     let timeout: Duration = (&args.timeout).into();
-    info!(?file_path, ?handshake, ?timeout);
+    info!(?file_path, %handshake, ?timeout);
     loop {
         info!(url = ?args.url, "Connecting...");
         match run_websocket_client(&args.url, &handshake).await {
@@ -85,14 +85,14 @@ async fn run_websocket_client(url: &str, handshake: &str) -> Result<ConnectionSt
     let (mut write, mut read) = ws_stream.split();
     info!("Connected");
     write.send(Message::Text(handshake.into())).await?;
-    info!(?handshake, "Handshake data sent");
+    info!(%handshake, "Handshake data sent");
     loop {
         tokio::select! {
             msg_result = read.next() => {
                 match msg_result {
                     Some(Ok(msg)) => {
                         match msg {
-                            Message::Text(text) => info!("{:?}", text),
+                            Message::Text(text) => info!("{}", text),
                             Message::Binary(bin) => info!(length = bin.len(), "BIN"),
                             Message::Close(_) => {
                                 warn!("Server closed connection");

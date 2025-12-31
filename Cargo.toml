@@ -19,3 +19,10 @@ tokio-tungstenite = { version = "0.28.0", features = ["native-tls"] }
 tracing = "0.1.44"
 tracing-appender = "0.2.4"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+
+[profile.slow-release]
+inherits = "release"
+codegen-units = 1
+lto = "fat"
+panic = "abort"
+strip = "symbols"
